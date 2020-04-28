@@ -1,0 +1,280 @@
+<form theme="dark">
+  <label>Device Health</label>
+  <fieldset submitButton="false">
+    <input type="time">
+      <label></label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Devices healthy</title>
+      <single>
+        <search>
+          <query>index=* source=oauth2_aca_modules (connected=true) | stats dc(id)</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Devices unhealthy</title>
+      <single>
+        <search>
+          <query>index=* source=oauth2_aca_modules
+| dedup id 
+| search (connected=false)
+| stats dc(id)</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Devices</title>
+      <table>
+        <title>Reachable</title>
+        <search>
+          <query>index=* (sourcetype="aca_systems")
+| dedup name
+| spath output=module_id path=modules{}
+| mvexpand module_id
+| fields - modules{}
+| join module_id
+    [search index=* sourcetype="oauth2_aca_modules" connected=true
+    | rename id as module_id, _time as "Last contacted"]
+| join type=outer module_id 
+    [search connected=true
+    | dedup id
+    | rename _time as "Last online", id as module_id
+    | table module_id, "Last online"]
+| fillnull value="No information"
+| table "control_system.zone_data{}.name", "dependency.module_name", module_id, name, connected, running, "Last contacted", "Last online"
+| rename control_system.zone_data{}.name as Zones, dependency.module_name as "Module type", module_id as ModuleID, name as "Room name", connected as Connected, running as Running
+| convert timeformat="%d/%m/%Y %H:%M:%S" ctime("Last contacted"), ctime("Last online")
+| fillnull value="Never online" "Last online"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="connected">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="running">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Connected">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Running">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <drilldown>
+          <set token="mod_tok">$row.ModuleID$</set>
+        </drilldown>
+      </table>
+      <table>
+        <title>Unreachable (click to investigate)</title>
+        <search>
+          <query>index=* (sourcetype="aca_systems")
+| dedup name
+| spath output=module_id path=modules{}
+| mvexpand module_id
+| fields - modules{}
+| join module_id
+    [search index=* sourcetype="oauth2_aca_modules" connected=false
+    | rename id as module_id, _time as "Last contacted"]
+| join type=outer module_id 
+    [search connected=true
+    | dedup id
+    | rename _time as "Last online", id as module_id
+    | table module_id, "Last online"]
+| fillnull value="No information"
+| table "control_system.zone_data{}.name", "dependency.module_name", module_id, name, connected, running, "Last contacted", "Last online"
+| rename control_system.zone_data{}.name as Zones, dependency.module_name as "Module type", module_id as "ModuleID", name as "Room name", connected as Connected, running as Running
+| convert timeformat="%d/%m/%Y %H:%M:%S" ctime("Last contacted"), ctime("Last online")
+| fillnull value="Never online" "Last online"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="connected">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="running">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Connected">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Running">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <drilldown>
+          <set token="mod_tok">$row.ModuleID$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Unhealthy devices over time</title>
+      <chart>
+        <search>
+          <query>index=* source=oauth2_aca_modules (connected=false) | timechart dc(id) as "Devices Unhealthy"</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$mod_tok$">
+      <title>Key info for $mod_tok$</title>
+      <table>
+        <search>
+          <query>index=* (sourcetype="aca_systems")
+| dedup name
+| spath output=module_id path=modules{}
+| mvexpand module_id
+| fields - modules{}
+| join module_id
+    [search index=* sourcetype="oauth2_aca_modules" id=$mod_tok$
+    | rename id as module_id, _time as "Last contacted"]
+| table dependency.module_name, name, connected, running, ip, port, udp, zones{}</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="connected">
+          <colorPalette type="map">{"false":#DC4E41}</colorPalette>
+        </format>
+        <format type="color" field="running">
+          <colorPalette type="map">{"false":#DC4E41,"true":#53A051}</colorPalette>
+        </format>
+        <drilldown>
+          <link target="_blank">search?q=index=*%20source=%22oauth2_aca_modules%22%20%20id=$mod_tok$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </table>
+      <event>
+        <title>Raw module data</title>
+        <search>
+          <query>index=* (sourcetype="aca_systems")
+| spath output=module_id path=modules{}
+| mvexpand module_id
+| fields - modules{}
+| join module_id
+    [search index=* sourcetype="oauth2_aca_modules" id=$mod_tok$
+    | rename id as module_id, _time as "Last contacted"]
+| table dependency.module_name, name, connected, running, ip, port, udp, zones{}</query>
+          <earliest>$earliest$</earliest>
+          <latest>$latest$</latest>
+        </search>
+        <option name="list.drilldown">full</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">search?q=index=*%20source=%22oauth2_aca_modules%22%20%20id=$mod_tok$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </event>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,71 @@
+
+# Application-level permissions
+
+[]
+access = read : [ * ], write : [ admin, power ]
+
+### EVENT TYPES
+
+[eventtypes]
+export = system
+
+
+### PROPS
+
+[props]
+export = system
+
+
+### TRANSFORMS
+
+[transforms]
+export = system
+
+
+### LOOKUPS
+
+[lookups]
+export = system
+
+
+### VIEWSTATES: even normal users should be able to create shared viewstates
+
+[viewstates]
+access = read : [ * ], write : [ * ]
+export = system
+
+[hrayner@localhost metadata]$ cat local.meta 
+[app/ui]
+version = 7.2.5
+modtime = 1559535872.783736000
+
+[app/launcher]
+version = 7.2.5
+modtime = 1559535872.785751000
+
+[views/Device_Health]
+access = read : [ * ], write : [ * ]
+export = none
+owner = hugh
+version = 7.2.5
+modtime = 1562122796.388450000
+
+[views/Docker_Health]
+access = read : [ * ], write : [ * ]
+export = none
+owner = hugh
+version = 7.2.5
+modtime = 1562122868.184121000
+
+[props/docker_processes/EXTRACT-docker_processes]
+access = read : [ * ], write : [ * ]
+export = system
+owner = hugh
+version = 7.2.5
+modtime = 1559799799.731907000
+
+[inputs/docker_low_level_api%3A%2F%2Fcontainer_key_stats]
+owner = hugh
+version = 7.2.5
+modtime = 1559803111.644855000
+

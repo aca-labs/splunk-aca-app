@@ -1,0 +1,277 @@
+<form theme="dark">
+  <label>Docker Health</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>CPU Percentage Use</title>
+      <chart>
+        <title>Note: Docker's calculation method allows for &gt;100% utilisation of CPU</title>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerkeystats.sh" 
+| convert rmunit(cpu)
+| bin _time span=5m
+| chart max(cpu) by _time, name</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">% CPU</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Percent Memory Use</title>
+      <chart>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerkeystats.sh" 
+| convert rmunit(memory.percent)
+| bin _time span=5m
+| chart values(memory.percent) by _time, name</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">% MEM</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Current State</title>
+      <table>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerkeystats.sh" 
+| dedup name
+| table name, container, cpu, memory.percent, memory.raw, blockIO, netIO, pids
+| rename name as Name, container as Container, cpu as "CPU Percentage", memory.percent as "Memory Percentage", memory.raw as "Raw Memory", blockIO as "Block I/O", netIO as "Net I/O", pids as PIDs</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="name_tok">$click.value$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>IP Address by Location</title>
+      <map>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockercontainer.sh"
+| rename NetworkSettings.Networks.acaprojx_aca.IPAddress as IP
+| iplocation IP
+| geostats count by IP</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="mapping.choroplethLayer.colorBins">5</option>
+        <option name="mapping.choroplethLayer.colorMode">auto</option>
+        <option name="mapping.choroplethLayer.maximumColor">0xaf575a</option>
+        <option name="mapping.choroplethLayer.minimumColor">0x62b3b2</option>
+        <option name="mapping.choroplethLayer.neutralPoint">0</option>
+        <option name="mapping.choroplethLayer.shapeOpacity">0.75</option>
+        <option name="mapping.choroplethLayer.showBorder">1</option>
+        <option name="mapping.data.maxClusters">100</option>
+        <option name="mapping.legend.placement">bottomright</option>
+        <option name="mapping.map.center">(0,0)</option>
+        <option name="mapping.map.panning">1</option>
+        <option name="mapping.map.scrollZoom">0</option>
+        <option name="mapping.map.zoom">2</option>
+        <option name="mapping.markerLayer.markerMaxSize">50</option>
+        <option name="mapping.markerLayer.markerMinSize">10</option>
+        <option name="mapping.markerLayer.markerOpacity">0.8</option>
+        <option name="mapping.showTiles">1</option>
+        <option name="mapping.tileLayer.maxZoom">7</option>
+        <option name="mapping.tileLayer.minZoom">0</option>
+        <option name="mapping.tileLayer.tileOpacity">1</option>
+        <option name="mapping.type">marker</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </map>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <input type="dropdown" token="name_tok" searchWhenChanged="true">
+        <label>Detailed statistics for:</label>
+        <choice value="*">All</choice>
+        <fieldForLabel>name</fieldForLabel>
+        <fieldForValue>name</fieldForValue>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerkeystats.sh"
+| dedup name
+| stats count by name
+| sort name</query>
+        </search>
+      </input>
+      <input type="radio" token="reset_name_tok" searchWhenChanged="true">
+        <label></label>
+        <choice value="Boom">Reset Menus</choice>
+        <default>Boom</default>
+        <change>
+          <unset token="form.name_tok"></unset>
+          <unset token="name_tok"></unset>
+          <set token="form.reset_name_tok">No</set>
+        </change>
+      </input>
+    </panel>
+  </row>
+  <row depends="$name_tok$">
+    <panel>
+      <title>Statistics Overviews: $name_tok$</title>
+      <table>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerkeystats.sh" name=$name_tok$
+| table _time, cpu, memory.percent, memory.raw, blockIO, netIO, pids
+| rename cpu as "CPU Percentage", memory.percent as "Memory Percentage", memory.raw as "Raw Memory", blockIO as "Block I/O", netIO as "Net I/O", pids as PIDs</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <link target="_blank">search?q=index=docker%20source=%22/opt/splunk/bin/scripts/dockerkeystats.sh%22%20name=$name_tok$&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <title>Raw Events: $name_tok$</title>
+      <event>
+        <search>
+          <query>index=docker source="/opt/splunk/bin/scripts/dockerstats.sh" name="/$name_tok$"</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="list.drilldown">full</option>
+        <option name="list.wrap">1</option>
+        <option name="maxLines">5</option>
+        <option name="raw.drilldown">full</option>
+        <option name="rowNumbers">0</option>
+        <option name="table.drilldown">all</option>
+        <option name="table.sortDirection">asc</option>
+        <option name="table.wrap">1</option>
+        <option name="type">list</option>
+        <drilldown>
+          <link target="_blank">search?q=index=docker%20source=%22/opt/splunk/bin/scripts/dockerstats.sh%22%20name=%22/$name_tok$%22&amp;earliest=$earliest$&amp;latest=$latest$</link>
+        </drilldown>
+      </event>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Process statistics</title>
+      <table>
+        <search>
+          <query>sourcetype="docker_processes"
+| dedup CONTAINER_ID, PID
+| eval time = _time
+| table time, CONTAINER_ID, PID, USER, CPU_PERCENTAGE, MEMORY_PERCENTAGE, RESIDENT_SET_SIZE, VIRTUAL_MEMORY_SIZE, TTY, STAT
+| rename time as "Time last contacted", CONTAINER_ID as "Container ID", USER as "User", CPU_PERCENTAGE as "CPU usage", MEMORY_PERCENTAGE as "Memory usage", RESIDENT_SET_SIZE as "Resident set size", VIRTUAL_MEMORY_SIZE as "Virtual Memory Size"</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>
